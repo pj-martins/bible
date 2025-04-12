@@ -1,0 +1,422 @@
+[
+    {
+        "language": "eng",
+        "abbreviation": "AMP",
+        "title": "Amplified Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "AMPC",
+        "title": "Amplified Bible, Classic Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "ASV",
+        "title": "American Standard Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "BOOKS",
+        "title": "The Books of the Bible NT"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "BSB",
+        "title": "Berean Standard Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CEB",
+        "title": "Common English Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CEV",
+        "title": "Contemporary English Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CEVDCI",
+        "title": "Contemporary English Version Interconfessional Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CEVUK",
+        "title": "Contemporary English Version (Anglicised) 2012"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CJB",
+        "title": "Complete Jewish Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CPDV",
+        "title": "Catholic Public Domain Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CSB",
+        "title": "Christian Standard Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "CSBA",
+        "title": "Christian Standard Bible Anglicised"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "DARBY",
+        "title": "Darby's Translation 1890"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "DRC1752",
+        "title": "Douay-Rheims Challoner Revision 1752 ✠"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "EASY",
+        "title": "EasyEnglish Bible 2024"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "EHV",
+        "title": "Evangelical Heritage Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "ERV",
+        "title": "Holy Bible: Easy-to-Read Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "ESV",
+        "title": "English Standard Version 2016"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "FBV",
+        "title": "Free Bible Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "FNVNT",
+        "title": "First Nations Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GNBDC",
+        "title": "Good News Bible (British Version) with Deuterocanonical books 2017"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GNBDK",
+        "title": "Good News Bible (British Version) Catholic Edition 2017"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GNBUK",
+        "title": "Good News Bible (British Verison) 2017"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GNT",
+        "title": "Good News Translation"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GNTD",
+        "title": "Good News Translation (US Version)"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "enggnv",
+        "title": "Geneva Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GW",
+        "title": "GOD'S WORD"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "GWC",
+        "title": "St Paul from the Trenches 1916"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "HCSB",
+        "title": "Holman Christian Standard Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "ICB",
+        "title": "International Children’s Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "JUB",
+        "title": "Jubilee Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "KJV",
+        "title": "King James Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "KJVAAE",
+        "title": "King James Version with Apocrypha, American Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "KJVAE",
+        "title": "King James Version, American Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "LEB",
+        "title": "Lexham English Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "LSB",
+        "title": "Legacy Standard Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "MEV",
+        "title": "Modern English Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "MP1650",
+        "title": "Psalms of David in Metre 1650 (Scottish Psalter)"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "MP1781",
+        "title": "Scottish Metrical Paraphrases 1781"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "MSG",
+        "title": "The Message"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NABRE",
+        "title": "New American Bible, revised edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NASB1995",
+        "title": "New American Standard Bible 1995"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NASB2020",
+        "title": "New American Standard Bible 2020"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NCV",
+        "title": "New Century Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NET",
+        "title": "New English Translation"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NIrV",
+        "title": "New International Reader’s Version 2014"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NIV11",
+        "title": "New International Version 2011"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NIVUK11",
+        "title": "New International Version (Anglicized) 2011"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NKJV",
+        "title": "New King James Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NLT",
+        "title": "New Living Translation"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NMV",
+        "title": "New Messianic Version Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NRSV",
+        "title": "New Revised Standard Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NRSVCI",
+        "title": "New Revised Standard Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "NRSVUE",
+        "title": "New Revised Standard Version Updated Edition 2021"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "OYBCENGL",
+        "title": "English Interlinear of the Orthodox Yiddish Brit Chadasha"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "OYTORHEG",
+        "title": "English word for word translation of Orthodox Yiddish Torah (OYTORAH)"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "PEV",
+        "title": "Plain English Version (Aboriginal)"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RAD",
+        "title": "Radiate New Testament"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RSV",
+        "title": "Revised Standard Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RSV-C",
+        "title": "Revised Standard Version Old Tradition 1952"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RSVCI",
+        "title": "Revised Standard Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RV1885",
+        "title": "Revised Version 1885"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "RV1895",
+        "title": "Revised Version with Apocrypha 1885, 1895"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TCENT",
+        "title": "The Text-Critical English New Testament"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TEG",
+        "title": "Isaiah 1830, 1842 (John Jones alias Ioan Tegid)"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TLV",
+        "title": "Tree of Life Version"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TOJB2011",
+        "title": "The Orthodox Jewish Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TPT",
+        "title": "The Passion Translation"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "TS2009",
+        "title": "The Scriptures 2009"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "WBMS",
+        "title": "Wycliffe's Bible with Modern Spelling"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "WEBBE",
+        "title": "World English Bible British Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "engWEBUS",
+        "title": "World English Bible, American English Edition, without Strong's Numbers"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "WMB",
+        "title": "World Messianic Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "WMBBE",
+        "title": "World Messianic Bible British Edition"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "YALL",
+        "title": "Y'all Version Bible"
+    },
+    {
+        "language": "eng",
+        "abbreviation": "YLT98",
+        "title": "Young's Literal Translation 1898"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "ABA",
+        "title": "Bible for All"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "AFR20",
+        "title": "Die Bybel 2020-vertaling"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "AFR53",
+        "title": "Afrikaans 1933/1953"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "AFR83",
+        "title": "Afrikaans 1983"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "CAB23",
+        "title": "Contemporary Afrikaans Bible 2023"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "DB",
+        "title": "Die Boodskap"
+    },
+    {
+        "language": "afr",
+        "abbreviation": "NLV",
+        "title": "Nuwe Lewende Vertaling"
+    }
+]
