@@ -1,0 +1,21 @@
+{
+  "name": "bible",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "download": "ts-node src/download.ts",
+    "populate-db": "ts-node src/populate-db.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/pg": "^8.11.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "node-html-parser": "^7.0.1",
+    "pg": "^8.14.1"
+  }
+}
