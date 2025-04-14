@@ -1,8 +1,6 @@
 import { Client, QueryResult } from "pg";
 import fs from 'fs';
-import { parse, HTMLElement } from 'node-html-parser';
 import path from 'path';
-import assert from "assert";
 
 const decodeMap: Array<{ orig: string, nw: string, recipeOnly?: boolean }> = [
 	{ orig: '&reg;', nw: '' },
@@ -178,180 +176,165 @@ type Book = {
 	name: string;
 	chapters: Array<{
 		chapter: string;
-		html_content: string;
+		verses: Array<{
+			verse: string;
+			header: boolean;
+			text: string;
+		}>
 	}>
 };
 
-const isHeaderElement = (el: HTMLElement) => {
-	const els = ['ms1', 'mr', 'qa', 'cl']
-	return els.includes(el.classNames) ||
-		el.classNames.match(/s[0-9]?/)
-		;
-}
-
-const isContentElement = (el: HTMLElement) => {
-	const els = ['nb', 'd', 'iex', 'ie'];
-	return els.includes(el.classNames) ||
-		el.classNames.match(/m[a-z]*/) ||
-		el.classNames.match(/p[a-z]*/) ||
-		el.classNames.match(/q[0-9a-z]?/) ||
-		el.classNames.match(/pi[0-9]?/) ||
-		el.classNames.match(/li[0-9]/)
-		;
-}
-
-const isInNote = (el: HTMLElement) => {
-	if (el.classNames.startsWith('note ')) {
-		return true;
-	}
-	if (el.parentNode != null) {
-		return isInNote(el.parentNode);
-	}
-	return false;
-}
-
-const isInContent = (el: HTMLElement) => {
-	if (el.classNames === 'content') {
-		return true;
-	}
-	if (el.parentNode != null) {
-		return isInContent(el.parentNode);
-	}
-	return false;
-}
-
-const processHeaderElement = (el: HTMLElement, message: string) => {
-	const headers = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
-	assert(headers.some((h) => h.classNames === 'heading', `${message} ${el.classNames}`));
-	const nonHeaders = headers.filter(h => h.classNames !== 'heading' && h.classNames !== 'label' && !isInNote(h));
-	if (nonHeaders.length) {
-		assert.fail(`Non Headers: ${nonHeaders.map(h => `${h.classNames} - ${h.innerText}`).join(', ')} - ${message} ${el.classNames}`);
-	}
-}
-
-const processContentElement = (el: HTMLElement, message: string) => {
-	if (!el.innerText.trim()) return;
-	const content = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
-	assert(content.some((c) => isInContent(c)), `${message} ${el.classNames}`);
-	const nonContent = content.filter(c => !isInContent(c) && c.classNames !== 'label' && !isInNote(c));
-	if (nonContent.length) {
-		assert.fail(`Non Content: ${nonContent.map(h => h.classNames).join(', ')} - ${message} ${el.classNames}`);
-	}
-
-	let currVerses: Array<number> = [];
-	for (const c of el.children) {
-		if (!c.innerText.trim()) {
-			continue;
-		}
-
-		if (currVerses.length) {
-			assert(c.classNames.startsWith('verse v'), `${message} ${c.classNames}`);
-		}
-		
-		currVerses = c.classNames.replace('verse ', '').split(' ').map(x => +x.replace('v', ''));
-
-		assert(!currVerses.some(x => isNaN(x)), c.classNames);
-
-		for (const c2 of c.children) {
-			if (c2.classNames == 'label') {
-				continue;
-			}
-
-			let contentEl = c2;
-			if (['qs', 'nd'].includes(contentEl.classNames)) {
-				assert.equal(1, contentEl.children.length);
-				contentEl = contentEl.children[0];
-			}
-			assert.equal(contentEl.classNames, 'content', `${message} ${contentEl.classNames}`);
-		}
-	}
-}
-
-const processTableElement = (el: HTMLElement, message: string) => {
-	const rows = el.querySelectorAll('tr');
-	assert(rows.some((r) => !!r.querySelector('.content')), message);
-}
-
-const processFootNote = (el: HTMLElement, message: string) => {
-	const headers = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
-	assert(headers.some((h) => h.classNames === 'heading'), `${message} ${el.classNames}`);
-}
-
-const processTableOfContents = (el: HTMLElement, message: string) => {
-	const content = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
-	assert(content.some((h) => h.classNames === 'content'), message);
-}
-
 (async () => {
-	// const db = new Client({ host: 'petjak.com', user: 'postgres', password: 'r3c!pe', database: 'bible' });
-	// await db.connect();
-	// let curr = await db.query('select * from bibles');
+	const db = new Client({ host: 'petjak.com', user: 'postgres', password: 'r3c!pe', database: 'bible' });
+	await db.connect();
+	let curr = await db.query('select * from bibles');
 	const versionMap: Array<{ language: string, abbreviation: string, title: string }> = JSON.parse(fs.readFileSync('version-map.json').toString());
 	for (const l of fs.readdirSync('books')) {
 		for (const v of fs.readdirSync(path.join('books', l))) {
-			// 			let bible = curr.rows.find((r) => r.language == l && r.abbreviation == v);
-			// 			if (!bible) {
-			// 				await db.query(`
-			// insert into bibles (language, abbreviation, title)
-			// select '${l}', '${v}', '${versionMap.find((x) => x.language == l && x.abbreviation == v)?.title}'
-			// `);
-			// 				curr = await db.query('select * from bibles');
-			// 				bible = curr.rows.find((r) => r.language == l && r.abbreviation == v);
-			// 			}
+			let bible = curr.rows.find((r) => r.language == l && r.abbreviation == v);
+			if (!bible) {
+				await db.query(`
+insert into bibles (language, abbreviation, title)
+select '${l}', '${v}', '${versionMap.find((x) => x.language == l && x.abbreviation == v)?.title}'
+`);
+				curr = await db.query('select * from bibles');
+				bible = curr.rows.find((r) => r.language == l && r.abbreviation == v);
+			}
 
-			// 			let books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
+			let books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
 
 			for (const b of fs.readdirSync(path.join('books', l, v))) {
 				const content: Book = JSON.parse(fs.readFileSync(path.join('books', l, v, b)).toString());
 				const ind = +b.split('_')[2];
-				// let book = books.rows.find((b) => b.abbreviation == content.abbreviation);
-				// if (!book) {
-				// 	await db.query(`
-				// 		insert into books (bible_id, abbreviation, book_name, order_index)
-				// 		select ${bible.bible_id}, '${content.abbreviation}', '${content.name}', ${ind}
-				// 	`);
-				// 	books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
-				// 	book = books.rows.find((b) => b.abbreviation == content.abbreviation);
-				// }
+				let book = books.rows.find((b) => b.abbreviation == content.abbreviation);
+				if (!book) {
+					await db.query(`
+						insert into books (bible_id, abbreviation, book_name, order_index)
+						select ${bible.bible_id}, '${content.abbreviation}', '${content.name}', ${ind}
+					`);
+					books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
+					book = books.rows.find((b) => b.abbreviation == content.abbreviation);
+				}
 
-				// const currVerses = await db.query(
-				// 	`select * from verses where book_id = ${book.book_id}`)
+				const currVerses = await db.query(
+					`select * from verses where book_id = ${book.book_id}`)
 
 
-				// console.log(v, book.abbreviation);
+				console.log(v, book.abbreviation);
 				for (const c of content.chapters) {
 					const chapterNumber = +c.chapter.replace(`${content.abbreviation}.`, '').replace('INTRO1', '0');
-					const parsed = parse(c.html_content.replace(/\n/g, ''));
-					const chaptNode = parsed.children[0].children[0].children[0];
-					assert.equal(chaptNode.classNames.replace('chapter ch', '').replace('INTRO1', '0'), chapterNumber);
-					for (let i = 0; i < chaptNode.children.length; i++) {
-						const el = chaptNode.children[i];
-						if (i == 0) {
-							if (!["label", "imt"].includes(el.classNames)) {
-								assert.fail(`First node mismatch ${el.classNames} in ${l} ${v} ${b}`);
-							}
+					const condensedVerses: { [chapter: string]: Array<{ verse: string, header: string | null }> } = {};
+					let currVerse = '';
+					let previousVerse = '';
+					let runningHeader: Array<string> = [];
+					for (let i = 0; i < c.verses.length; i++) {
+						let verse = c.verses[i];
+						if (i == 0 && !verse.text.trim() && !verse.verse) {
 							continue;
 						}
-						if (isHeaderElement(el)) {
-							processHeaderElement(el, `${b} ${c.chapter}`);
-						} else if (isContentElement(el)) {
-							processContentElement(el, `${b} ${c.chapter}`);
-						} else if (el.classNames == 'table') {
-							processTableElement(el, `${b} ${c.chapter}`);
-						} else if (el.classNames == 'b') {
-							assert.equal(el.innerText.trim(), '');
-						} else if (el.classNames == 'r') {
-							processFootNote(el, `${b} ${c.chapter}`);
-						} else if (el.classNames.match(/io[0-9a-z]/)) {
-							processTableOfContents(el,  `${b} ${c.chapter}`);
-						} else {
-							assert.fail(`Unknown ${el.classNames} ${b} ${c.chapter}`);
+
+						if (verse.header) {
+							runningHeader.push(verse.text.trim());
+							previousVerse = currVerse;
+							currVerse = '';
+							continue;
+						}
+
+						if (verse.verse && verse.verse == previousVerse &&
+							condensedVerses[verse.verse]?.some((x) => !!x.header) &&
+							runningHeader.length
+						) {
+							console.warn("MULTIPLE HEADERS");
+						} else if (!verse.verse) {
+							if (currVerse) {
+								verse.verse = currVerse;
+							} else if (i < c.verses.length - 2) {
+								verse.verse = c.verses[i + 1].verse;
+							}
+
+							if (!verse.verse) {
+								throw "HERR";
+							}
+						}
+						// if (!currVerse && previousVerse == )
+						// let runningHeader: Array<string> = [];
+						// while (verse.header) {
+						// 	runningHeader.push(verse.text.trim());
+						// 	i++;
+						// 	// if (i < c.verses.length) {
+						// 	// 	verse = c.verses[i];
+						// 	// }
+						// 	verse = c.verses[i];
+						// }
+
+						// if (runningHeader.length) {
+						// 	console.log("V:", verse, runningHeader);
+						// }
+
+						// if (i >= c.verses.length) {
+						// 	break;
+						// }
+
+						currVerse = verse.verse;
+
+						// let j = i;
+						// while (!verse.verse) {
+						// 	if (j == 0) {
+						// 		verse.verse = '1';
+						// 	} else {
+						// 		verse.verse = c.verses[j - 1].verse;
+						// 	}
+						// 	j--;
+						// }
+
+						if (!condensedVerses[verse.verse]) {
+							condensedVerses[verse.verse] = []
+						}
+
+						condensedVerses[verse.verse].push({
+							verse: verse.text.trim(),
+							header: runningHeader.length ? runningHeader.join(' ') : null
+						});
+
+						runningHeader = [];
+					}
+
+					const final = Object.keys(condensedVerses).map((k) => {
+						const head = condensedVerses[k].filter(x => !!x.header);
+						if (head.length > 1) {
+							console.log("HHH:", k, condensedVerses[k]);
+							// throw "HERE";
+						}
+						return {
+							verse_numbers: k.split('+').map(x => +x.replace(`${c.chapter}.`, '')),
+							verse_text: cleanText(condensedVerses[k].map(t => t.verse).join(' '))?.trim(),
+							header_text: head.length ? head.map(x => cleanText(x.header ?? '')).join(', ') : null,
+							k,
+							c,
+						}
+					});
+
+					for (const f of final) {
+						for (let i = 0; i < f.verse_numbers.length; i++) {
+							if (currVerses.rows.some((cv) => cv.chapter_number == chapterNumber && cv.verse_number == f.verse_numbers[i])) {
+								continue;
+							}
+							// 							await db.query(`
+							// insert into verses (verse_text, header_text, verse_number, chapter_number, book_id, parent_verse_number)
+							// values ($1, $2, $3, $4, $5, $6)`, [
+							// 								i == 0 ? f.verse_text : null,
+							// 								i == 0 ? f.header_text : null,
+							// 								f.verse_numbers[i],
+							// 								chapterNumber,
+							// 								book.book_id,
+							// 								i > 0 ? f.verse_numbers[0] : null
+							// 							]);
 						}
 					}
 				}
 			}
 		}
 	}
-	// await db.end();
+	await db.end();
 	process.exit(1);
 })();
