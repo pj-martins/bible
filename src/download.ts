@@ -39,16 +39,17 @@ import path from 'path';
                 for (const c of b.chapters) {
                     const url = `${baseUrl}/_next/data/odPN62GeIjyJdC15r-ASU/en/bible/${v.id}/${c.usfm}.${v.abbreviation}.json?versionId=${v.id}&usfm=${c.usfm}.${v.abbreviation}`;
                     const verses = await axios.get(url)
-                    const parsed = parse(verses.data.pageProps.chapterInfo.content);
-                    const mappedVerses = parsed.querySelectorAll(`span[class='content'], span[class='heading']`).map(x => ({
-                        verse: x.parentNode.getAttribute('data-usfm'),
-                        text: x.innerText,
-                        header: x.classNames.includes('heading')
-                    }));
+                    // const parsed = parse(verses.data.pageProps.chapterInfo.content);
+                    // const mappedVerses = parsed.querySelectorAll(`span[class='content'], span[class='heading']`).map(x => ({
+                    //     verse: x.parentNode.getAttribute('data-usfm'),
+                    //     text: x.innerText,
+                    //     header: x.classNames.includes('heading')
+                    // }));
                     
                     currBook.chapters.push({
                         chapter: c.usfm,
-                        verses: mappedVerses.filter(x => !!x.text?.trim())
+                        // verses: mappedVerses.filter(x => !!x.text?.trim()),
+                        html_content: verses.data.pageProps.chapterInfo.content, 
                     });
                 }
                 fs.writeFileSync(fileName, JSON.stringify(currBook));
