@@ -40,22 +40,15 @@ import path from 'path';
                     const url = `${baseUrl}/_next/data/odPN62GeIjyJdC15r-ASU/en/bible/${v.id}/${c.usfm}.${v.abbreviation}.json?versionId=${v.id}&usfm=${c.usfm}.${v.abbreviation}`;
                     const verses = await axios.get(url)
                     const parsed = parse(verses.data.pageProps.chapterInfo.content);
-                    const mappedVerses = parsed.querySelectorAll(`span[class='content']`).map(x => ({
+                    const mappedVerses = parsed.querySelectorAll(`span[class='content'], span[class='heading']`).map(x => ({
                         verse: x.parentNode.getAttribute('data-usfm'),
-                        text: x.innerText
+                        text: x.innerText,
+                        header: x.classNames.includes('heading')
                     }));
-                    // for (let i = 0; i < mappedVerses.length; i++) {
-                    //     if (mappedVerses[i].verse) {
-                    //         mappedVerses[i].verse = mappedVerses[i].verse?.split('.').pop()
-                    //     } else if (i > 0) {
-                    //         mappedVerses[i].verse = mappedVerses[i - 1].verse;
-                    //     } else {
-                    //         mappedVerses[i].verse = '1';
-                    //     }
-                    // }
+                    
                     currBook.chapters.push({
                         chapter: c.usfm,
-                        verses: mappedVerses
+                        verses: mappedVerses.filter(x => !!x.text?.trim())
                     });
                 }
                 fs.writeFileSync(fileName, JSON.stringify(currBook));
