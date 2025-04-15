@@ -163,8 +163,7 @@ const decodeMap: Array<{ orig: string, nw: string, recipeOnly?: boolean }> = [
 	{ orig: '&#185;', nw: '¹' },
 ];
 
-const cleanText = (input?: string) => {
-	if (!input?.replace) return input;
+const cleanText = (input: string) => {
 	let replaced = input;
 	for (let dc of decodeMap) {
 		let regex = new RegExp(dc.orig, 'g');
@@ -173,7 +172,7 @@ const cleanText = (input?: string) => {
 	return replaced.replace(/<[^>]*>/g, '').trim();
 }
 
-type Book = {
+type RawBook = {
 	abbreviation: string;
 	name: string;
 	chapters: Array<{
@@ -181,6 +180,18 @@ type Book = {
 		html_content: string;
 	}>
 };
+
+type Chapter = {
+	chapterNumber: number;
+	verses: Array<Verse>;
+}
+
+type Verse = {
+	verseNumbers: Array<number>;
+	contentElements: Array<string>;
+	notes: Array<string>;
+	header: string | null;
+}
 
 const isHeaderElement = (el: HTMLElement) => {
 	const els = ['ms1', 'mr', 'qa', 'cl']
@@ -220,16 +231,43 @@ const isInContent = (el: HTMLElement) => {
 	return false;
 }
 
-const processHeaderElement = (el: HTMLElement, message: string) => {
+const processHeaderElement = (el: HTMLElement, message: string): string => {
 	const headers = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
 	assert(headers.some((h) => h.classNames === 'heading', `${message} ${el.classNames}`));
 	const nonHeaders = headers.filter(h => h.classNames !== 'heading' && h.classNames !== 'label' && !isInNote(h));
 	if (nonHeaders.length) {
 		assert.fail(`Non Headers: ${nonHeaders.map(h => `${h.classNames} - ${h.innerText}`).join(', ')} - ${message} ${el.classNames}`);
 	}
+	return headers.map((h) => h.innerText.trim()).join(' ');
 }
 
-const processContentElement = (el: HTMLElement, message: string) => {
+const parseContentElements = (el: HTMLElement, verse: Verse, message: string) => {
+	if (!el.innerText.trim()) {
+		return;
+	}
+
+	if (el.classNames == 'note f' || el.classNames == 'note x') {
+		verse.notes.push(cleanText(el.innerText.trim()));
+		return;
+	}
+
+	if (el.classNames === 'content') {
+		verse.contentElements.push(cleanText(el.innerText.trim()));
+		return;
+	}
+
+	if (el.children.length > 0) {
+		el.children.map((c) => parseContentElements(c, verse, message)).flat();
+		return;
+	}
+
+	assert.fail(`No content element found ${message} - ${el.classNames}`);
+
+}
+
+const weirdOnes: Array<string> = [];
+
+const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader: { headers: string[], notes: string[] }, message: string) => {
 	if (!el.innerText.trim()) return;
 	const content = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
 	assert(content.some((c) => isInContent(c)), `${message} ${el.classNames}`);
@@ -238,43 +276,74 @@ const processContentElement = (el: HTMLElement, message: string) => {
 		assert.fail(`Non Content: ${nonContent.map(h => h.classNames).join(', ')} - ${message} ${el.classNames}`);
 	}
 
-	let currVerses: Array<number> = [];
+	let verseNumbers: Array<number> = [];
+	let previous: Array<number> = [];
 	for (const c of el.children) {
 		if (!c.innerText.trim()) {
 			continue;
 		}
 
-		if (currVerses.length) {
-			assert(c.classNames.startsWith('verse v'), `${message} ${c.classNames}`);
+		if (verseNumbers.length) {
+			assert(previous.every((p) => verseNumbers.includes(p)));
+		} else if (c.classNames.startsWith('verse ')) {
+			verseNumbers = c.classNames.replace('verse ', '').split(c.classNames.includes(',') ? ',' : ' ').map(x => +x.replace('v', ''));
+			assert(!verseNumbers.some(x => isNaN(x)), `${c.classNames} - ${c.innerText} - ${message}`);
+		} else {
+			weirdOnes.push(`${c.classNames} - ${c.innerText} - ${message}`);
+			verseNumbers = [0];
 		}
-		
-		currVerses = c.classNames.replace('verse ', '').split(' ').map(x => +x.replace('v', ''));
 
-		assert(!currVerses.some(x => isNaN(x)), c.classNames);
+		previous = verseNumbers;
 
-		for (const c2 of c.children) {
-			if (c2.classNames == 'label') {
-				continue;
+		let currentVerse = chapter.verses.find((v) => v.verseNumbers.every((v2) => verseNumbers.includes(v2)));
+		if (!currentVerse) {
+			currentVerse = {
+				verseNumbers,
+				contentElements: [],
+				notes: runningHeader.notes.map(h => h.trim()),
+				header: runningHeader.headers.map(h => h.trim()).join(' ')
 			}
+			chapter.verses.push(currentVerse);
+			runningHeader = { headers: [], notes: [] };
+		}
 
-			let contentEl = c2;
-			if (['qs', 'nd'].includes(contentEl.classNames)) {
-				assert.equal(1, contentEl.children.length);
-				contentEl = contentEl.children[0];
+		if (c.classNames == 'content' || c.classNames == 'note f' || c.classNames == 'note x') {
+			parseContentElements(c, currentVerse, `${message} ${c.classNames}`);
+		} else {
+			for (const c2 of c.children) {
+				if (c2.classNames == 'label' || !c2.innerText.trim()) {
+					continue;
+				}
+
+				const prevCount = currentVerse.contentElements.length;
+				parseContentElements(c2, currentVerse, `${message} ${c2.classNames}`);
+				// if (['qs', 'nd', 'bk', 'tl', 'sig'].includes(contentEl.classNames)) {
+				// 	assert.equal(contentEl.children.length, 1, `${message} ${contentEl.classNames} - ${contentEl.children.map((c) => c.classNames).join(', ')}`);
+				// 	contentEl = contentEl.children[0];
+				// }
+				const diff = currentVerse.contentElements.length - prevCount;
+				if (diff > 1) {
+					weirdOnes.push(`${message} ${c2.classNames}`);
+					// console.log("L:", currentVerse.contentElements, `${message} ${c2.classNames}`);
+				}
+				if (!['note f', 'note x'].includes(c2.classNames)) {
+					assert(diff > 0, `${message} ${c2.classNames}`);
+				}
 			}
-			assert.equal(contentEl.classNames, 'content', `${message} ${contentEl.classNames}`);
 		}
 	}
 }
 
 const processTableElement = (el: HTMLElement, message: string) => {
-	const rows = el.querySelectorAll('tr');
-	assert(rows.some((r) => !!r.querySelector('.content')), message);
+	const c = el.querySelectorAll('tr').map(r => r.querySelector('.content'));
+	assert(c.length > 0, message);
+	console.log("C:", el, c.map((x) => x?.innerText.trim()));
 }
 
-const processFootNote = (el: HTMLElement, message: string) => {
+const processHeadingNote = (el: HTMLElement, message: string) => {
 	const headers = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
 	assert(headers.some((h) => h.classNames === 'heading'), `${message} ${el.classNames}`);
+	return headers.map((h) => h.innerText.trim()).join(' ');
 }
 
 const processTableOfContents = (el: HTMLElement, message: string) => {
@@ -302,7 +371,7 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 			// 			let books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
 
 			for (const b of fs.readdirSync(path.join('books', l, v))) {
-				const content: Book = JSON.parse(fs.readFileSync(path.join('books', l, v, b)).toString());
+				const content: RawBook = JSON.parse(fs.readFileSync(path.join('books', l, v, b)).toString());
 				const ind = +b.split('_')[2];
 				// let book = books.rows.find((b) => b.abbreviation == content.abbreviation);
 				// if (!book) {
@@ -319,11 +388,29 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 
 
 				// console.log(v, book.abbreviation);
-				for (const c of content.chapters) {
-					const chapterNumber = +c.chapter.replace(`${content.abbreviation}.`, '').replace('INTRO1', '0');
-					const parsed = parse(c.html_content.replace(/\n/g, ''));
+				const chapters: Array<Chapter> = [];
+				for (const chapt of content.chapters) {
+					const chapterNumber = +chapt.chapter.replace(`${content.abbreviation}.`, '').replace('INTRO1', '0');
+					const parsed = parse(chapt.html_content.replace(/\n/g, ''));
 					const chaptNode = parsed.children[0].children[0].children[0];
 					assert.equal(chaptNode.classNames.replace('chapter ch', '').replace('INTRO1', '0'), chapterNumber);
+
+					const chapter: Chapter = {
+						chapterNumber,
+						verses: []
+					};
+
+					chapters.push(chapter);
+
+					let runningHeader: {
+						headers: Array<string>;
+						notes: Array<string>;
+					} = {
+						headers: [],
+						notes: []
+					};
+
+					// iterate verses
 					for (let i = 0; i < chaptNode.children.length; i++) {
 						const el = chaptNode.children[i];
 						if (i == 0) {
@@ -333,25 +420,34 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 							continue;
 						}
 						if (isHeaderElement(el)) {
-							processHeaderElement(el, `${b} ${c.chapter}`);
+							runningHeader.headers.push(processHeaderElement(el, `${b} ${chapt.chapter}`));
 						} else if (isContentElement(el)) {
-							processContentElement(el, `${b} ${c.chapter}`);
+							processContentElement(el, chapter, runningHeader, `${b} ${chapt.chapter}`);
+							runningHeader = {
+								headers: [],
+								notes: []
+							};
 						} else if (el.classNames == 'table') {
-							processTableElement(el, `${b} ${c.chapter}`);
+							processTableElement(el, `${b} ${chapt.chapter}`);
+							runningHeader = {
+								headers: [],
+								notes: []
+							};
 						} else if (el.classNames == 'b') {
 							assert.equal(el.innerText.trim(), '');
 						} else if (el.classNames == 'r') {
-							processFootNote(el, `${b} ${c.chapter}`);
+							runningHeader.notes.push(processHeadingNote(el, `${b} ${chapt.chapter}`));
 						} else if (el.classNames.match(/io[0-9a-z]/)) {
-							processTableOfContents(el,  `${b} ${c.chapter}`);
+							processTableOfContents(el, `${b} ${chapt.chapter}`);
 						} else {
-							assert.fail(`Unknown ${el.classNames} ${b} ${c.chapter}`);
+							assert.fail(`Unknown ${el.classNames} ${b} ${chapt.chapter}`);
 						}
 					}
 				}
 			}
 		}
 	}
+	fs.writeFileSync('weirdones.txt', weirdOnes.join('\n'));
 	// await db.end();
 	process.exit(1);
 })();
