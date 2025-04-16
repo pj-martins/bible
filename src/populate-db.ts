@@ -186,6 +186,11 @@ type Chapter = {
 	verses: Array<Verse>;
 }
 
+type RunningHeader = {
+	headers: string[];
+	notes: string[]
+}
+
 type Verse = {
 	verseNumbers: Array<number>;
 	contentElements: Array<string>;
@@ -267,7 +272,7 @@ const parseContentElements = (el: HTMLElement, verse: Verse, message: string) =>
 
 const weirdOnes: Array<string> = [];
 
-const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader: { headers: string[], notes: string[] }, message: string) => {
+const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader: RunningHeader, message: string) => {
 	if (!el.innerText.trim()) return;
 	const content = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
 	assert(content.some((c) => isInContent(c)), `${message} ${el.classNames}`);
@@ -283,13 +288,23 @@ const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader:
 			continue;
 		}
 
-		if (verseNumbers.length) {
-			assert(previous.every((p) => verseNumbers.includes(p)));
-		} else if (c.classNames.startsWith('verse ')) {
+		// if (c.innerText.trim().includes('het Dawid die Amalekiete oorwin en toe het hy teruggekom')) {
+		// 	console.log("HERE");
+		// }
+
+		// if (verseNumbers.length) {
+		// 	assert(previous.every((p) => verseNumbers.includes(p)));
+		// } else if (c.classNames.startsWith('verse ')) {
+		if (c.classNames.startsWith('verse ')) {
 			verseNumbers = c.classNames.replace('verse ', '').split(c.classNames.includes(',') ? ',' : ' ').map(x => +x.replace('v', ''));
 			assert(!verseNumbers.some(x => isNaN(x)), `${c.classNames} - ${c.innerText} - ${message}`);
+			if (previous.length && !previous.every((p) => verseNumbers.includes(p))) {
+				weirdOnes.push(`old verse match logic broken ${message} - ${c.innerHTML}`);
+			}
 		} else {
-			weirdOnes.push(`${c.classNames} - ${c.innerText} - ${message}`);
+			if (chapter.chapterNumber != 0) {
+				weirdOnes.push(`No verse numbers: ${c.classNames} - ${message} - ${c.innerText}`);
+			}
 			verseNumbers = [0];
 		}
 
@@ -317,14 +332,9 @@ const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader:
 
 				const prevCount = currentVerse.contentElements.length;
 				parseContentElements(c2, currentVerse, `${message} ${c2.classNames}`);
-				// if (['qs', 'nd', 'bk', 'tl', 'sig'].includes(contentEl.classNames)) {
-				// 	assert.equal(contentEl.children.length, 1, `${message} ${contentEl.classNames} - ${contentEl.children.map((c) => c.classNames).join(', ')}`);
-				// 	contentEl = contentEl.children[0];
-				// }
 				const diff = currentVerse.contentElements.length - prevCount;
 				if (diff > 1) {
-					weirdOnes.push(`${message} ${c2.classNames}`);
-					// console.log("L:", currentVerse.contentElements, `${message} ${c2.classNames}`);
+					weirdOnes.push(`More than one el added nested? ${message} ${c2.classNames} - ${c2.innerHTML}`);
 				}
 				if (!['note f', 'note x'].includes(c2.classNames)) {
 					assert(diff > 0, `${message} ${c2.classNames}`);
@@ -334,10 +344,12 @@ const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader:
 	}
 }
 
-const processTableElement = (el: HTMLElement, message: string) => {
-	const c = el.querySelectorAll('tr').map(r => r.querySelector('.content'));
-	assert(c.length > 0, message);
-	console.log("C:", el, c.map((x) => x?.innerText.trim()));
+const processTableElement = (el: HTMLElement, chapter: Chapter, runningHeader: RunningHeader, message: string) => {
+	const children = el.querySelectorAll('td');
+	assert(children.length > 0, message);
+	for (const c of children) {
+		processContentElement(c, chapter, runningHeader, message);
+	}
 }
 
 const processHeadingNote = (el: HTMLElement, message: string) => {
@@ -346,9 +358,13 @@ const processHeadingNote = (el: HTMLElement, message: string) => {
 	return headers.map((h) => h.innerText.trim()).join(' ');
 }
 
-const processTableOfContents = (el: HTMLElement, message: string) => {
-	const content = el.querySelectorAll('*').filter((c) => !c.children.length && !!c.innerText.trim())
-	assert(content.some((h) => h.classNames === 'content'), message);
+const processTableOfContents = (el: HTMLElement, chapter: Chapter, message: string) => {
+	assert(el.children.every((c) => c.classNames === 'content'));
+	assert.equal(0, chapter.chapterNumber, message);
+	assert.equal(1, chapter.verses.length);
+	assert(chapter.verses[0].verseNumbers[0] == 0);
+	const tocText = el.children.map((c) => c.innerText.trim()).filter((x) => !!x);
+	chapter.verses[0].contentElements.push(...tocText);
 }
 
 (async () => {
@@ -356,8 +372,8 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 	// await db.connect();
 	// let curr = await db.query('select * from bibles');
 	const versionMap: Array<{ language: string, abbreviation: string, title: string }> = JSON.parse(fs.readFileSync('version-map.json').toString());
-	for (const l of fs.readdirSync('books')) {
-		for (const v of fs.readdirSync(path.join('books', l))) {
+	for (const l of fs.readdirSync('books_in')) {
+		for (const v of fs.readdirSync(path.join('books_in', l))) {
 			// 			let bible = curr.rows.find((r) => r.language == l && r.abbreviation == v);
 			// 			if (!bible) {
 			// 				await db.query(`
@@ -370,8 +386,8 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 
 			// 			let books = await db.query(`select * from books where bible_id = ${bible.bible_id}`);
 
-			for (const b of fs.readdirSync(path.join('books', l, v))) {
-				const content: RawBook = JSON.parse(fs.readFileSync(path.join('books', l, v, b)).toString());
+			for (const b of fs.readdirSync(path.join('books_in', l, v))) {
+				const content: RawBook = JSON.parse(fs.readFileSync(path.join('books_in', l, v, b)).toString());
 				const ind = +b.split('_')[2];
 				// let book = books.rows.find((b) => b.abbreviation == content.abbreviation);
 				// if (!book) {
@@ -387,7 +403,7 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 				// 	`select * from verses where book_id = ${book.book_id}`)
 
 
-				// console.log(v, book.abbreviation);
+				console.log(b);
 				const chapters: Array<Chapter> = [];
 				for (const chapt of content.chapters) {
 					const chapterNumber = +chapt.chapter.replace(`${content.abbreviation}.`, '').replace('INTRO1', '0');
@@ -428,7 +444,8 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 								notes: []
 							};
 						} else if (el.classNames == 'table') {
-							processTableElement(el, `${b} ${chapt.chapter}`);
+							weirdOnes.push(`Table: ${b} ${chapt.chapter} - ${el.innerText}`);
+							processTableElement(el, chapter, runningHeader, `${b} ${chapt.chapter}`);
 							runningHeader = {
 								headers: [],
 								notes: []
@@ -438,12 +455,43 @@ const processTableOfContents = (el: HTMLElement, message: string) => {
 						} else if (el.classNames == 'r') {
 							runningHeader.notes.push(processHeadingNote(el, `${b} ${chapt.chapter}`));
 						} else if (el.classNames.match(/io[0-9a-z]/)) {
-							processTableOfContents(el, `${b} ${chapt.chapter}`);
+							if (chapter.chapterNumber != 0) {
+								weirdOnes.push(`Table contents: ${b} ${chapt.chapter} - ${el.innerText}`);
+							}
+							processTableOfContents(el, chapter, `${b} ${chapt.chapter}`);
 						} else {
 							assert.fail(`Unknown ${el.classNames} ${b} ${chapt.chapter}`);
 						}
 					}
+
+					const verseNumbers = chapter.verses.map((v) => v.verseNumbers).flat();
+					const maxNum = Math.max(...verseNumbers);
+					for (let i = 1; i <= maxNum; i++) {
+						if (!verseNumbers.includes(i)) {
+							weirdOnes.push(`Missing verse: ${b} ${chapterNumber} - ${i} -${verseNumbers.join(',')}`);
+						}
+					}
 				}
+
+				const langPath = path.join('books_out', l);
+				if (!fs.existsSync(langPath)) {
+					fs.mkdirSync(langPath);
+				}
+
+				const versionDir = path.join(langPath, v);
+				if (!fs.existsSync(versionDir)) {
+					fs.mkdirSync(versionDir);
+				}
+
+				fs.writeFileSync(path.join(versionDir, `${l}_${v}_${ind}_${content.abbreviation}.json`), JSON.stringify({
+					languageAbbreviation: l,
+					versionAbbreviation: v,
+					versionName: versionMap.find((x) => x.language == l && x.abbreviation == v)?.title,
+					bookAbbreviation: content.abbreviation,
+					bookName: content.name,
+					bookIndex: ind,
+					chapters
+				}));
 			}
 		}
 	}

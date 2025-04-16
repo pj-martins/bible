@@ -1,4 +1,6 @@
-books/
+books_in/
+books_out/
 node_modules/
 books copy/
 books_old/
+weirdones.txt
