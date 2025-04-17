@@ -4,6 +4,7 @@
   "description": "",
   "scripts": {
     "download": "ts-node src/download.ts",
+    "aggregate": "ts-node src/aggregate.ts",
     "populate-db": "ts-node src/populate-db.ts"
   },
   "author": "",
