@@ -1,3 +1,4 @@
+import { decode } from 'html-entities';
 export const decodeMap: Array<{ orig: string, nw: string, recipeOnly?: boolean }> = [
 	{ orig: '&reg;', nw: '' },
 	{ orig: '&trade;', nw: '' },
@@ -160,11 +161,12 @@ export const decodeMap: Array<{ orig: string, nw: string, recipeOnly?: boolean }
 ];
 
 export const cleanText = (input: string) => {
-	let replaced = input;
-	for (let dc of decodeMap) {
-		let regex = new RegExp(dc.orig, 'g');
-		replaced = replaced.replace(regex, dc.nw);
-	}
-	return replaced.replace(/<[^>]*>/g, '').trim();
+	// let replaced = input;
+	// for (let dc of decodeMap) {
+	// 	let regex = new RegExp(dc.orig, 'g');
+	// 	replaced = replaced.replace(regex, dc.nw);
+	// }
+	// return replaced.replace(/<[^>]*>/g, '').trim();
+    return decode(input);
 }
 

@@ -1,8 +1,6 @@
-import { Client, QueryResult } from "pg";
+import { Client } from "pg";
 import fs from 'fs';
-import { parse, HTMLElement } from 'node-html-parser';
 import path from 'path';
-import assert from "assert";
 import { cleanText } from "./utils";
 
 type Book = {
@@ -30,6 +28,10 @@ type Verse = {
 (async () => {
 	const db = new Client({ host: 'petjak.com', user: 'postgres', password: 'r3c!pe', database: 'bible' });
 	await db.connect();
+	await db.query(`
+delete from verses;
+ALTER SEQUENCE verse_verse_id_seq RESTART WITH 1;
+`);
 	let curr = await db.query('select * from bibles');
 	const versionMap: Array<{ language: string, abbreviation: string, title: string }> = JSON.parse(fs.readFileSync('version-map.json').toString());
 	for (const l of fs.readdirSync('books_out')) {
@@ -63,21 +65,17 @@ type Verse = {
 				}
 
 
-				// const currVerses = await db.query(
-				// 	`select * from verses where book_id = ${dbbook.book_id}`)
+				console.log(b);
+				const flattened = book.chapters.map(c => c.verses.map((x) => ({
+					verse_text: cleanText(x.contentElements.join('')),
+					header_text: !x.header || x.header.trim() == '' ? null : cleanText(x.header),
+					verse_numbers: x.verseNumbers,
+					chapter_number: c.chapterNumber,
+					book_id: dbbook.book_id,
+					notes: x.notes
+				}))).flat();
 
-				for (const chapter of book.chapters) {
-					console.log(b, chapter.chapterNumber);
-					const flattened = chapter.verses.map((x) => ({
-						verse_text: cleanText(x.contentElements.map((e) => e.trim()).join(' ')),
-						header_text: !x.header || x.header.trim() == '' ? null : cleanText(x.header),
-						verse_numbers: x.verseNumbers,
-						chapter_number: chapter.chapterNumber,
-						book_id: dbbook.book_id,
-						notes: x.notes
-					}));
-
-					const sql = `
+				const sql = `
 insert into verses (verse_numbers, verse_text, header_text, book_id, chapter_number, notes)
 select 
 	replace(replace((data ->> 'verse_numbers'), '[', '{'), ']', '}')::int[] as verse_numbers,
@@ -88,29 +86,8 @@ select
 	replace(replace((data ->> 'notes'), '[', '{'), ']', '}')::text[] as notes
 from jsonb_array_elements('${JSON.stringify(flattened).replace(/'/g, `''`)}'::jsonb) as item(data)
 						`.trim();
-					fs.writeFileSync('temp.sql', sql);
-					await db.query(sql)
-
-
-					// 	// for (const v of chapter.verses) {
-					// 	// 	if (currVerses.rows.some((x) => x.verse_numbers.every((y) => v.verseNumbers.includes(y)))) {
-					// 	// 		continue;
-					// 	// 	}
-					// 	// 	await db.query(`
-					// 	// 		insert into verses (verse_text, header_text, verse_numbers, chapter_number, book_id, notes)
-					// 	// 		values ($1, $2, $3, $4, $5, $6)`, [
-					// 	// 		v.contentElements.map((e) => e.trim()).join(' '),
-					// 	// 		v.header?.trim() == '' ? null : v.header,
-					// 	// 		v.verseNumbers,
-					// 	// 		chapter.chapterNumber,
-					// 	// 		dbbook.book_id,
-					// 	// 		v.notes
-					// 	// 	]);
-					// 	// }
-				}
-
-				// console.log(b);
-
+				fs.writeFileSync('temp.sql', sql);
+				await db.query(sql)
 			}
 		}
 	}

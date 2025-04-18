@@ -5,7 +5,8 @@
   "scripts": {
     "download": "ts-node src/download.ts",
     "aggregate": "ts-node src/aggregate.ts",
-    "populate-db": "ts-node src/populate-db.ts"
+    "populate-db": "ts-node src/populate-db.ts",
+    "word-count": "ts-node src/word-count.ts"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "html-entities": "^2.6.0",
     "node-html-parser": "^7.0.1",
     "pg": "^8.14.1"
   }

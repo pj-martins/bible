@@ -2,6 +2,7 @@ import fs from 'fs';
 import { parse, HTMLElement } from 'node-html-parser';
 import path from 'path';
 import assert from "assert";
+import { cleanText } from './utils';
 
 type RawBook = {
 	abbreviation: string;
@@ -79,16 +80,19 @@ const processHeaderElement = (el: HTMLElement, message: string): string => {
 
 const parseContentElements = (el: HTMLElement, verse: Verse, message: string) => {
 	if (!el.innerText.trim()) {
+		if (el.classNames === 'content') {
+			verse.contentElements.push("\n");
+		}
 		return;
 	}
 
 	if (el.classNames == 'note f' || el.classNames == 'note x') {
-		verse.notes.push(cleanText(el.innerText.trim()));
+		verse.notes.push(cleanText(el.innerText));
 		return;
 	}
 
 	if (el.classNames === 'content') {
-		verse.contentElements.push(cleanText(el.innerText.trim()));
+		verse.contentElements.push(cleanText(el.innerText));
 		return;
 	}
 
@@ -114,7 +118,7 @@ const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader:
 
 	let verseNumbers: Array<number> = [];
 	for (const c of el.children) {
-		if (!c.innerText.trim()) {
+		if (!c.innerText.trim() && runningHeader.headers.length) {
 			continue;
 		}
 
@@ -142,7 +146,8 @@ const processContentElement = (el: HTMLElement, chapter: Chapter, runningHeader:
 			parseContentElements(c, currentVerse, `${message} ${c.classNames}`);
 		} else {
 			for (const c2 of c.children) {
-				if (c2.classNames == 'label' || !c2.innerText.trim()) {
+				if (c2.classNames == 'label' ||
+					(c2.classNames != 'content' && !c2.innerText.trim())) {
 					continue;
 				}
 
@@ -237,6 +242,10 @@ const processTableOfContents = (el: HTMLElement, chapter: Chapter, message: stri
 							};
 						} else if (el.classNames == 'b') {
 							assert.equal(el.innerText.trim(), '');
+							const last = chapter.verses[chapter.verses.length - 1];
+							if (last) {
+								last.contentElements.push('\n');
+							}
 						} else if (el.classNames == 'r') {
 							runningHeader.notes.push(processHeadingNote(el, `${b} ${chapt.chapter}`));
 						} else if (el.classNames.match(/io[0-9a-z]/)) {
