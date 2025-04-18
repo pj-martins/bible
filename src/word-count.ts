@@ -6,7 +6,7 @@ import { Client } from "pg";
     const result = await db.query(`
 select lower(verse_text) as verse_text, new_testament, book_name
 from bible_view
-where abbreviation = '${process.argv[2]}'
+where bible_abbreviation = '${process.argv[2]}'
 and lower(verse_text) like '%${process.argv[3]}%'`);
     const wordsAll = result.rows.map(r => ({
         book_name: r.book_name,
