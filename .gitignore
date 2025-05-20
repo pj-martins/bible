@@ -1,6 +1,7 @@
-books_in/
-books_out/
-node_modules/
-books copy/
-books_old/
-weirdones.txt
+scraper/books_in*
+scraper/books_out*
+scraper/node_modules/
+scraper/books copy/
+scraper/books_old/
+scraper/weirdones.txt
+scraper/bibles.db
