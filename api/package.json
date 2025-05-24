@@ -6,8 +6,8 @@
     "start": "nodemon --verbose",
     "build": "tsc",
     "dev": "ts-node ./src/server.ts",
-    "deploy": "npm run build && scp -r ./dist/* pjmartins@petjak.com:/var/www/bibleapi",
-    "copy-packagejson": "scp -r ./package.json pjmartins@petjak.com:/var/www/bibleapi"
+    "deploy": "npm run build && scp -r ./dist/* pjmartins@petjak.com:/var/www/bible/api",
+    "copy-packagejson": "scp -r ./package.json pjmartins@petjak.com:/var/www/bible/api"
   },
   "dependencies": {
     "cors": "^2.8.5",

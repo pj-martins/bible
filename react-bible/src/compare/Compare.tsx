@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Bible, Book, CompareOutput, Lookups } from '../models';
+import { Bible, CompareOutput, Lookups } from '../models';
 import '../App.css';
 import { Button, Col, Container, Form, Row } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -23,10 +23,10 @@ export const Compare = () => {
     // const bibleText = (b: Bible) => ({ ...b, displayText: `${b.abbreviation}${b.title ? ` - ${b.title}` : ''}`});
 
     const onBibleSelectedRemoved = (values: Bible[], selectedValue: Bible) => {
-        if (selectedValue.bible_id == 0) {
+        if (selectedValue.bible_id === 0) {
             setSelectedBibles([...lookups?.bibles ?? []]);
         } else {
-            setSelectedBibles(values.filter((x) => x.bible_id != 0));
+            setSelectedBibles(values.filter((x) => x.bible_id !== 0));
         }
     };
 
@@ -87,14 +87,16 @@ export const Compare = () => {
                         ))}
                     </Form.Select>
                 </Col>
-                <Col md={4}>
+                <Col md={3}>
                     <Form.Control value={selectedChapter} onChange={(e) => setSelectedChapter(e.target.value)}></Form.Control>
                 </Col>
-                <Col md={4}>
+                <Col md={3}>
                     <Form.Control value={selectedVerses} onChange={(e) => setSelectedVerses(e.target.value)}></Form.Control>
                 </Col>
+                <Col md={2}>
+                    <Button variant="primary" onClick={() => retrieveVerses()}>Go</Button>
+                </Col>
             </Row>
-            <Button variant="primary" onClick={() => retrieveVerses()}>Go</Button>
             <br />
             {Object.entries(verses).map(([x, v]) => (
                 <Row style={{ borderBottom: '1px solid #ddd', margin: '5px' }}>
