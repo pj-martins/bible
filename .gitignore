@@ -5,3 +5,6 @@ scraper/books copy/
 scraper/books_old/
 scraper/weirdones.txt
 scraper/bibles.db
+api/.env
+api/node_modules/
+react-bible/node_modules/

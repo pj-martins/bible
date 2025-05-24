@@ -1,0 +1,6 @@
+{
+    "ignore": [".git", "node_modules", "dist", "src/assets/recipe-images"],
+    "watch": ["./src"],
+    "exec": "npm run dev",
+    "ext": "ts"
+  }
